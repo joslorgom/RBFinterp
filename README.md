@@ -106,10 +106,6 @@ test
   <img src="test2.png">
 </p>
 
-## Author
-
-* **Jose Lorenzo Gomez**
-
 ## References
 
 * Beckert, Armin and Wendland, Holger. Multivariate interpolation for fluid-structure-interaction problems using radial basis functions. _Aerospace Science and Technology_, 5 (2), p. 125-134, 2001.
