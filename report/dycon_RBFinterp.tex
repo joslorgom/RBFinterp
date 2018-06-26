@@ -1,0 +1,287 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+%\usepackage{tikz}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amsthm}
+
+\usepackage{listings}
+\usepackage{color} %red, green, blue, yellow, cyan, magenta, black, white
+\definecolor{mygreen}{RGB}{28,172,0} % color values Red, Green, Blue
+\definecolor{mylilas}{RGB}{170,55,241}
+
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\makeatletter
+\def\BState{\State\hskip-\ALG@thistlm}
+\makeatother
+
+\usepackage{tikz}
+\usetikzlibrary{backgrounds}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usepgfplotslibrary{external}
+\tikzexternalize[]
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem} % reset theorem numbering for each chapter
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition} % definition numbers are dependent on theorem numbers
+\newtheorem{exmp}[thm]{Example} % same for example numbers
+
+\begin{document}
+
+\lstset{language=Matlab,%
+    %basicstyle=\color{red},
+    frame = single,
+    breaklines=true,%
+    morekeywords={matlab2tikz},
+    keywordstyle=\color{blue},%
+    morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+    identifierstyle=\color{black},%
+    stringstyle=\color{mylilas},
+    commentstyle=\color{mygreen},%
+    showstringspaces=false,%without this there will be a symbol in the places where there is a space
+    numbers=left,%
+    numberstyle={\tiny \color{black}},% size of the numbers
+    numbersep=9pt, % this defines how far the numbers are from the text
+    emph=[1]{break},emphstyle=[1]\color{red}, %some words to emphasise
+    %emph=[2]{word1,word2}, emphstyle=[2]{style},    
+}
+
+%\lstset{language=Matlab} 
+
+\title{Radial Basis Functions Interpolation}
+\author{José Vicente Lorenzo Gómez \thanks{Universidad Autónoma de Madrid.}}
+
+\maketitle
+
+Radial Basis Functions can be used to interpolate scattered data in a $d$-dimensional space. The main idea is to construct an interpolation expression $F: \mathbb{R}^d \rightarrow \mathbb{R}$ as a weighted sum of radial functions $\varphi: \mathbb{R} \rightarrow \mathbb{R}$ (see Tables \ref{tab:RBFcompactsupport} and \ref{tab:RBFglobalsupport}),
+%
+\begin{equation} \label{eq:RBFinterpolation}
+F \left( \mathbf{x} \right) = \sum_{j=1}^N \gamma_j \varphi \left( \| \mathbf{x} - \mathbf{x}_{s, j} \|_{\mathbb{R}^d} \right) + p \left( \mathbf{x} \right),
+\end{equation}
+%
+where $p \left( x \right)$ is a polynomial term whose coefficients are unknown, and $\mathbf{x}_{s, j}$, with $1 \leq j \leq N$, are the source points where the function value is known. The weights $\gamma_j$ and the coefficients in the polynomial $p$ are obtained by imposing the known values at the source points,
+%
+\begin{equation} \label{eq:RBFinterpolationconditions}
+F \left( \mathbf{x}_{s, i} \right) = f_{s, i},
+\end{equation}
+%
+and the orthogonality conditions for every polynomial $q$ with degree less or equal than that of $p$,
+%
+\begin{equation} \label{eq:RBForthogonality}
+\sum_{j=1}^N \gamma_j q \left( \mathbf{x}_{s,j} \right) = 0.
+\end{equation}
+
+The minimal degree of polynomials $p$ depends on the choice of the radial functions. A unique interpolant is given if the basis function is a conditionally positive definite function. 
+
+\begin{defn} \cite{beckert2001}
+An even function $\phi: \mathbb{R}^d \rightarrow \mathbb{R}$ is said to be conditionally positive definite of order $m$ if for all $N \in \mathbb{N}$, all sets of pairwise distinct centers $X = \{ \mathbf{x}_1, ... , \mathbf{x}_N \} \subseteq \mathbb{R}^d$ and all $\mathbf{\gamma} \in \mathbb{R}^N \setminus \{ 0 \}$ that satisfy \eqref{eq:RBForthogonality} for all polynomials $q$ of degree less than $m$, the quadratic form
+%
+\begin{equation}
+\sum_{i=1}^N \sum_{j=1}^N  \gamma_i \gamma_j \phi \left( \| \mathbf{x}_j - \mathbf{x}_i \|_{\mathbb{R}^d} \right)
+\end{equation}
+%
+is positive.
+\end{defn}
+
+\begin{thm} \cite{beckert2001,wendland1996}
+Suppose $\phi$ is conditionally positive definite of order $m$. Suppose further that the set of centers $X = \{ \mathbf{x}_1, ... , \mathbf{x}_N \} \subseteq \mathbb{R}^d$ has the property that the zero polynomial is the only polynomial of degree less than $m$ that vanishes on it completely. Then there exists exactly one function $F$ of the form \eqref{eq:RBFinterpolation} that satisfies both \eqref{eq:RBFinterpolationconditions} and \eqref{eq:RBForthogonality}.
+\end{thm}
+
+If the basis functions are conditionally positive definite of order $m \leq 2$, a linear polynomial can be used \cite{deboer2007}.
+
+For the sake of clarity, we will consider a linear polynomial and known values $f_{s, i}$ at the source nodes in a 2-dimensional domain. Thus,
+%
+\begin{equation} \label{eq:RBFNequations}
+f_{s,i} = \sum_{j=1}^N \gamma_j \varphi \left( \| \mathbf{x}_{s,i} - \mathbf{x}_{s, j} \|_{\mathbb{R}^d} \right) + \beta_x x_{s, i} + \beta_y y_{s, i} + \beta_0, \quad 1 \leq i \leq N.
+\end{equation}
+
+The system is closed with the orthogonality conditions in \eqref{eq:RBForthogonality} that provide $d + 1$ additional equations, as the following relations must hold,
+%
+\begin{equation} \label{eq:RBForthogonality2}
+\begin{cases}
+\displaystyle \sum_{j=1}^N \gamma_j = 0, \\
+\displaystyle \sum_{j=1}^N \gamma_j x_{s,j}= 0, \\
+\displaystyle \sum_{j=1}^N \gamma_j y_{s,j}= 0.
+\end{cases}
+\end{equation}
+
+The above system can be expressed in matrix form by introducing 
+%
+\begin{equation}
+\left[M_{ij} \right]_{N \times N}= \varphi \left( \| \mathbf{x}_{s,i} - \mathbf{x}_{s, j} \|_{\mathbb{R}^d} \right),
+\end{equation}
+%
+and
+%
+\begin{equation} 
+\mathbf{P}_s = \begin{pmatrix}
+1 & x_{s,1} & y_{s,1} \\ 
+\vdots & \vdots & \vdots \\ 
+1 & x_{s,i} & y_{s,i} \\ 
+\vdots & \vdots & \vdots \\ 
+1 & x_{s,N} & y_{s,N}
+\end{pmatrix}, \quad 
+\mathbf{\gamma} = \begin{pmatrix}
+\gamma_1\\ 
+\vdots\\ 
+\gamma_i\\ 
+\vdots\\ 
+\gamma_N
+\end{pmatrix}, \quad
+\mathbf{f}_s = \begin{pmatrix}
+f_{s,1}\\ 
+\vdots\\ 
+f_{s,i}\\ 
+\vdots\\ 
+f_{s,N}
+\end{pmatrix}, \quad
+\mathbf{\beta} = \begin{pmatrix}
+1\\ 
+\beta_x\\  
+\beta_y
+\end{pmatrix}.
+\end{equation} 
+%
+Thus,
+%
+\begin{equation} \label{eq:RBFsystem}
+\begin{pmatrix}
+\mathbf{M} & \mathbf{P}_s \\ 
+\mathbf{P}_s^T & \mathbf{0}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{\gamma} \\ 
+\mathbf{\beta}
+\end{pmatrix} =
+\begin{pmatrix}
+\mathbf{f}_s \\ 
+\mathbf{0} 
+\end{pmatrix}.
+\end{equation}
+
+Once the linear system in \eqref{eq:RBFsystem} is solved, the obtained parameters can be used to interpolate the known data with \eqref{eq:RBFinterpolation} at a set of points $\mathbf{x}_i$, $1 \leq i \leq M$. This can be easily done by building the matrices 
+%
+\begin{equation}
+\left[ \hat{M}_{ij} \right]_{N \times N}=\varphi \left(\| \mathbf{x}_i - \mathbf{x}_{s, j} \|_{\mathbb{R}^d} \right),
+\end{equation}
+%
+and
+%
+\begin{equation} 
+\mathbf{\hat{P}} = \begin{pmatrix}
+1 & x_{1} & y_{1} \\ 
+\vdots & \vdots & \vdots \\ 
+1 & x_{i} & y_{i} \\ 
+\vdots & \vdots & \vdots \\ 
+1 & x_{M} & y_{M}
+\end{pmatrix},
+\end{equation}
+%
+and finally performing the matrix-vector product
+%
+\begin{equation}
+\mathbf{f} = 
+\begin{pmatrix}
+\mathbf{\hat{M}} & \mathbf{\hat{P}}
+\end{pmatrix}
+\begin{pmatrix}
+\mathbf{\gamma} \\ 
+\mathbf{\beta}
+\end{pmatrix}.
+\end{equation} 
+
+It is easy to check that the matrix in \eqref{eq:RBFsystem} is dense unless RBF with compact support are used. This is a major drawback of the RBF interpolation technique, as building and solving the associated matrix must be done at a high computational cost.
+
+\renewcommand{\arraystretch}{1.8}
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline 
+\textbf{RBF name} & \textbf{Abbreviation} & $\displaystyle  \mathbf{ \varphi \left( r \right) }$ \\ 
+\hline
+Spline type & R & $\left( \epsilon r \right)^n$, $n$ odd \\ 
+\hline 
+Thin plate spline & TPS & $\left( \epsilon r \right)^n \log\left( \epsilon r \right)$, $n$ even \\ 
+\hline 
+Multiquadric biharmonics & MQB & $\sqrt{1 + \left( \epsilon r \right) ^2}$ \\ 
+\hline
+Quadric biharmonics & QB & $1 + \left( \epsilon r \right)$ \\
+\hline
+Inverse multiquadric biharmonics & IMQB & $\displaystyle \frac{1}{\sqrt{1 + \left( \epsilon r \right) ^2}}$ \\ 
+\hline 
+Inverse quadric biharmonics & IQB & $\displaystyle \frac{1}{ 1 + \left( \epsilon r \right) ^2 }$ \\ 
+\hline 
+Gaussian & Gauss & $\displaystyle e^{-\left(\epsilon r \right)^2}$ \\ 
+\hline 
+\end{tabular}
+\caption{Radial Basis Functions with global support \cite{biancolini2018, deboer2007}.}  \label{tab:RBFcompactsupport}
+\end{table}
+
+In order to work with sparse matrices, RBF with compact support can be used instead, which have the following form,
+%
+\begin{equation}
+\varphi \left( \xi = \frac{r}{R} \right) = \left\{
+\begin{array}{ll}
+f \left( \xi \right), \quad & 0 \leq \xi \leq 1 \\
+0, \quad & \xi > 1
+\end{array}.
+\right.
+\end{equation}
+%
+where $f \left( \xi \right) \geq 0$ and $R$ is the support radius. When using a support radius, only the points at a distance lower than $R$ to the source nodes are considered in the calculation of the matrix $\mathbf{M}$, so that the lower the support radius the greater the matrix sparsity.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|c|}
+\hline 
+\textbf{RBF name} & $\mathbf{ \varphi \left( \xi \right) }$ \\ 
+\hline 
+CP $\mathcal{C}^0$ & $\left( 1 - \xi \right)^2$ \\ 
+\hline 
+CP $\mathcal{C}^2$ & $\left( 1 - \xi \right)^4 \left( 4 \xi + 1 \right)$ \\ 
+\hline 
+CP $\mathcal{C}^4$ & $\left( 1 - \xi \right)^6 \left( \frac{35}{3} \xi^2 + 6 \xi + 1  \right)$ \\ 
+\hline 
+CP $\mathcal{C}^6$ & $\left( 1 - \xi \right)^8 \left( 32 \xi^3 + 25 \xi^2 + 8 \xi + 1  \right)$ \\ 
+\hline 
+CTPS $\mathcal{C}^0$ & $\left( 1 - \xi \right)^5$ \\ 
+\hline 
+CTPS $\mathcal{C}^1$ & $1 + \frac{80}{3} \xi^2 - 40 \xi^3 + 15 \xi^4 - \frac{8}{3} \xi^5 + 20 \xi^2 \log \xi$ \\ 
+\hline 
+CTPS $\mathcal{C}^2_a$ & $1 - 30 \xi^2 - 10 \xi^3 + 45 \xi^4 - 6 \xi^5 - 60 \xi^3 \log \xi$ \\
+\hline 
+CTPS $\mathcal{C}^2_b$ & $1 - 20 \xi^2 + 80 \xi^3 - 45 \xi^4 - 16 \xi^5 + 60 \xi^4 \log \xi$ \\
+\hline 
+\end{tabular}
+\caption{Radial Basis Functions with compact support \cite{wendland1996}.}  \label{tab:RBFglobalsupport}
+\end{table}
+
+\section*{Matlab Code}
+
+\lstinputlisting{RBF/RBFinterp.m}
+\lstinputlisting{RBF/RBFparam.m}
+\lstinputlisting{RBF/RBFeval.m}
+\lstinputlisting{RBF/radialFunction.m}
+
+\begin{thebibliography}{2}
+\bibitem{beckert2001} 
+Beckert, Armin and Wendland, Holger. Multivariate interpolation for fluid-structure-interaction problems using radial basis functions. \textit{Aerospace Science and Technology}, 5 (2), p. 125-134, 2001.
+\bibitem{wendland1996}
+Wendland, Holger. \textit{Konstruktion und Untersuchung radialer Basisfunktionen mit kompaktem Tr{\"a}ger}. PhD thesis, G{\"o}ttingen, Georg-August-Universit{\"a}t zu G{\"o}ttingen, Diss, 1996.
+\bibitem{deboer2007}
+De Boer, A and Van der Schoot, MS and Bijl, Hester. Mesh deformation based on radial basis function interpolation. \textit{Computers \& structures}, 85 (11-14), p. 784-795, 2007.
+\bibitem{biancolini2018}
+Biancolini, Marco Evangelos. \textit{Fast Radial Basis Functions for Engineering Applications}. Springer, 2018.
+\end{thebibliography}
+
+\end{document}
